@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Audio to Text</title>
+    <style>
+      button {
+        width: 100px;
+        height: 30px;
+        font-size: 16px;
+        margin: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="start-button">Start</button>
+    <button id="stop-button" disabled>Stop</button>
+    <script>
+      // Get the buttons
+      const startButton = document.getElementById("start-button");
+      const stopButton = document.getElementById("stop-button");
+
+      // Create a SpeechRecognition object
+      const recognition = new webkitSpeechRecognition();
+
+      // Set up the recognition object
+      recognition.lang = "en-US";
+      recognition.maxResults = 10;
+      recognition.interimResults = true;
+
+      // Create a variable to store the audio stream
+      let audioStream;
+
+      // Add event listeners to the buttons
+      startButton.addEventListener("click", () => {
+        // Create a new audio stream
+        audioStream = new MediaStream();
+
+        // Get access to the user's microphone
+        navigator.mediaDevices
+          .getUserMedia({ audio: true })
+          .then((stream) => {
+            // Add the audio stream to the recognition object
+            recognition.stream = stream;
+
+            // Start the recognition
+            recognition.start();
+
+            // Enable the stop button
+            stopButton.disabled = false;
+            startButton.disabled = true;
+          })
+          .catch((error) => console.error("Error getting user media:", error));
+      });
+
+      stopButton.addEventListener("click", () => {
+        // Stop the recognition
+        recognition.stop();
+
+        // Disable the stop button
+        stopButton.disabled = true;
+        startButton.disabled = false;
+
+        // Get the text from the recognition object
+        const text = recognition.result[0][0].transcript;
+        console.log(text);
+      });
+
+      // Add an event listener to the recognition object
+      recognition.onresult = (event) => {
+        // Get the text from the recognition object
+        const text = event.results[0][0].transcript;
+        console.log(text);
+      };
+
+      recognition.onerror = (event) => {
+        console.error("Error with recognition:", event.error);
+      };
+
+      recognition.onend = () => {
+        console.log("Recognition ended");
+      };
+    </script>
+  </body>
+</html>

@@ -1,65 +1,125 @@
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import path from "path";
-// import * as pdfjsLib from "pdfjs-dist";
+import { parse } from "csv-parse";
 import chromaClient from "./utils/chromaClient";
+import ollama from "./utils/ollama";
 
-// const getFileContent = async (filePath: string) => {
-//   const data = new Uint8Array(readFileSync(filePath));
-//   const doc = await pdfjsLib.getDocument(data).promise;
-//   const page = await doc.getPage(1);
-//   const content = await page.getTextContent();
-//   const text = content.items.map((item) => item.str).join("");
+type FileContent = {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+  name: string;
+};
 
-//   return text;
-// };
+const csvFilePath = path.join(__dirname, "./assets/data.csv");
 
-// const chroma = async () => {
-//   try {
-//     // const content = await getFileContent(
-//     //   path.join(__dirname, "./assets/Resume.pdf")
-//     // );
-//     const collection = await chromaClient.getOrCreateCollection({
-//       name: "ai-engineering-basics",
-//     });
+const res = async (filePath: string): Promise<FileContent[]> => {
+  return new Promise((resolve, reject) => {
+    const file = readFileSync(filePath, "utf8");
 
-//     await collection.upsert({
-//       ids: ["id1", "id2"],
-//       documents: [
-//         "This is a document about pineapple",
-//         "This is a document about oranges",
-//       ],
-//     });
+    parse(
+      file,
+      {
+        columns: true,
+        trim: true,
+      },
+      (err, records) => {
+        if (err) return reject(err);
 
-//     const results = await collection.query({
-//       queryTexts: "This is a query document about florida",
-//       nResults: 2,
-//     });
+        resolve(records);
+      }
+    );
+  });
+};
 
-//     console.log(results);
-//   } catch (error) {
-//     console.error(error);
-//   }
-// };
+try {
+  // const data = await res(csvFilePath);
+  // if (!data.length) {
+  //   throw new Error("No data found");
+  // }
+  const collection = await chromaClient.getOrCreateCollection({
+    name: "ai-engineering-basics",
+  });
 
-// chroma();
+  const result = await ollama.chat({
+    model: "llama3",
+    messages: [
+      {
+        role: "system",
+        content: `You are a professional yet approachable assistant helping potential employers or clients understand your expertise.`,
+      },
+      {
+        role: "user",
+        content: "Hellos",
+      },
+    ],
+  });
 
-import ollama from "ollama";
+  console.log(result);
 
-const prompt = "The sky is blue because of rayleigh scattering";
+  // const promises = data.map(async (item) => {
+  //   const res = await ollama.embeddings({
+  //     model: "nomic-embed-text",
+  //     prompt: item.question,
+  //   });
+  //   await collection.add({
+  //     ids: [item.id],
+  //     embeddings: [res.embedding], // Manually adding precomputed embeddings
+  //     metadatas: [
+  //       {
+  //         category: item.category,
+  //         name: item.name,
+  //       },
+  //     ],
+  //     documents: [`Question: ${item.question}\nAnswer: ${item.answer}`],
+  //   });
+  // });
+  // await Promise.all(promises);
+} catch (error) {
+  console.error(error);
+}
 
-const res = await ollama.embeddings({
-  model: "nomic-embed-text",
-  prompt,
-});
+// const res = await ollama.embeddings({
+//   model: "nomic-embed-text",
+//   prompt,
+// });
 
-const vector = res.embedding;
+// const vector = res.embedding;
 
-const chat = await ollama.chat({
-  model: "llama3",
-  messages: [{ role: "user", content: "hello" }],
-});
+// const myInfo = await getFileContent(
+//   path.join(__dirname, "./assets/Resume.pdf")
+// );
 
-console.log(vector);
+// const chat = await ollama.chat({
+//   model: "llama3",
+//   stream: true,
+//   messages: [
+//     {
+//       role: "system",
+//       content: `You are a professional yet approachable assistant helping potential employers or clients understand your expertise.
+
+//     - If someone asks about your background or skills, **don’t just list everything**—instead, make it engaging:
+//       - Focus on the **most relevant & latest** technologies from this info:
+//         ${myInfo}
+//       - Keep it **natural and conversational**—no robotic or interview-style answers.
+//       - Show **confidence** in how you can help, without over-explaining.
+
+//     - If the question isn’t about your background, just respond normally.
+//     - If you **don’t have the information**, simply say: **"That’s outside my wheelhouse, but here’s what I can help with!"**`,
+//     },
+//     {
+//       role: "user",
+//       content: prompt,
+//     },
+//   ],
+// });
+
+// ollama.chat;
+
+// for await (const chunk of chat) {
+//   process.stdout.write(chunk.message.content);
+// }
 
 // const collection = await chromaClient.getOrCreateCollection({
 //   name: "ai-engineering-basics",
