@@ -1,15 +1,15 @@
 services:
-  api:
-    container_name: ai-engineering-basics-api
-    build: .
-    env_file:
-      - .env
-    volumes:
-      - ./src:/app/src
-    ports:
-      - "${PORT}:${PORT}"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+  # api:
+  #   container_name: ai-engineering-basics-api
+  #   build: .
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - ./src:/app/src
+  #   ports:
+  #     - "${PORT}:${PORT}"
+  #   networks:
+  #     - ai-engineering-basics
   chromadb:
     container_name: ai-engineering-basics-chromadb
     image: chromadb/chroma:0.6.4.dev266
@@ -17,3 +17,10 @@ services:
       - "8000:8000"
     volumes:
       - ./chroma:/chroma
+    networks:
+      - ai-engineering-basics
+
+networks:
+  ai-engineering-basics:
+    driver: bridge
+

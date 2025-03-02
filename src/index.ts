@@ -1,8 +1,10 @@
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync } from "fs";
 import path from "path";
 import { parse } from "csv-parse";
 import chromaClient from "./utils/chromaClient";
-import ollama from "./utils/ollama";
+import ollama from "ollama";
+import { Ollama } from "@langchain/ollama";
+import type { Collection } from "chromadb";
 
 type FileContent = {
   id: string;
@@ -33,39 +35,62 @@ const res = async (filePath: string): Promise<FileContent[]> => {
   });
 };
 
+const query = async (prompt: string, collection: Collection) => {
+  const { embedding } = await ollama.embeddings({
+    model: "nomic-embed-text",
+    prompt,
+  });
+
+  return collection.query({
+    queryEmbeddings: [embedding],
+    nResults: 2,
+  });
+};
+
+const newOllama = new Ollama({
+  model: "llama3",
+  temperature: 0.2,
+  maxRetries: 2,
+});
+
 try {
-  // const data = await res(csvFilePath);
-  // if (!data.length) {
-  //   throw new Error("No data found");
-  // }
+  const data = await res(csvFilePath);
+  if (!data.length) {
+    throw new Error("No data found");
+  }
   const collection = await chromaClient.getOrCreateCollection({
     name: "ai-engineering-basics",
   });
 
-  const result = await ollama.chat({
-    model: "llama3",
-    messages: [
-      {
-        role: "system",
-        content: `You are a professional yet approachable assistant helping potential employers or clients understand your expertise.`,
-      },
-      {
-        role: "user",
-        content: "Hellos",
-      },
-    ],
-  });
+  const usePrompt = "What services do you have?";
 
-  console.log(result);
+  const result = await query(usePrompt, collection);
+
+  console.log(result.documents[0]);
+
+  console.log(
+    await newOllama.invoke(`
+    You are an AI representative of TechNova. Speak as if you are part of the company by using "we" instead of "they" or "their." Be engaging, professional, and helpful.
+  
+    Based on this data:
+  
+    ${result.documents[0].join("\n")}
+  
+    Answer the user query in a conversational and company-representative way while making it short: ${usePrompt}
+    `)
+  );
 
   // const promises = data.map(async (item) => {
-  //   const res = await ollama.embeddings({
+  //   console.log("Processing item: ", item.id);
+
+  //   const { embedding } = await ollama.embeddings({
   //     model: "nomic-embed-text",
   //     prompt: item.question,
   //   });
+
   //   await collection.add({
   //     ids: [item.id],
-  //     embeddings: [res.embedding], // Manually adding precomputed embeddings
+  //     embeddings: [embedding], // Manually adding precomputed embeddings
   //     metadatas: [
   //       {
   //         category: item.category,
@@ -74,6 +99,7 @@ try {
   //     ],
   //     documents: [`Question: ${item.question}\nAnswer: ${item.answer}`],
   //   });
+  //   console.log("Item processed: ", item.id);
   // });
   // await Promise.all(promises);
 } catch (error) {
