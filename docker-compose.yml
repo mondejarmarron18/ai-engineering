@@ -19,6 +19,9 @@ services:
       - ./chroma:/chroma
     networks:
       - ai-engineering-basics
+    environment:
+      - CHROMA_DB_IMPL=duckdb  # Use DuckDB for persistence
+      - CHROMA_PERSIST_DIRECTORY=/chroma  # Store data in /chroma
 
 networks:
   ai-engineering-basics:
