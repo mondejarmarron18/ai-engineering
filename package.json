@@ -13,8 +13,10 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@google-cloud/text-to-speech": "^5.8.1",
     "@langchain/core": "^0.3.42",
     "@langchain/ollama": "^0.2.0",
+    "axios": "^1.8.1",
     "chromadb": "^1.10.4",
     "chromadb-default-embed": "^2.13.2",
     "csv-parse": "^5.6.0",

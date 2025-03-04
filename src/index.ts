@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import path from "path";
 import { parse } from "csv-parse";
 import chromaClient from "./utils/chromaClient";
@@ -6,6 +6,8 @@ import ollama, { type ChatRequest } from "ollama";
 import { Ollama } from "@langchain/ollama";
 import type { AddRecordsParams, Collection } from "chromadb";
 import { x8tSync } from "x8t";
+import axios from "axios";
+import { TextToSpeechClient } from "@google-cloud/text-to-speech";
 
 type FileContent = {
   id: string;
@@ -14,6 +16,12 @@ type FileContent = {
   category: string;
   name: string;
 };
+
+process.env.GOOGLE_APPLICATION_CREDENTIALS = path.join(
+  __dirname,
+  "../googleServiceAccountKey.json"
+);
+const textToSpeech = new TextToSpeechClient();
 
 const csvFilePath = path.join(__dirname, "./assets/data.csv");
 
@@ -72,8 +80,6 @@ try {
   //       model: "nomic-embed-text",
   //       prompt: answer,
   //     });
-
-  //     console.log(embedding.length);
 
   //     return collection.upsert({
   //       ids: [id],
@@ -261,7 +267,7 @@ Before we wrap up, do you have any questions about our company culture, benefits
 
   for await (const chunk of response) {
     responseMessage += chunk.message.content;
-    process.stdout.write(chunk.message.content);
+    // process.stdout.write(chunk.message.content);
   }
 
   const isDone = await ollama.chat({
@@ -335,11 +341,36 @@ Before we wrap up, do you have any questions about our company culture, benefits
       ],
     });
 
-    const { result } = x8tSync<{ isDone: string }>(() =>
-      JSON.parse(grade.message.content)
-    );
+    const { result } = x8tSync<{
+      skills: number;
+      professionalism: number;
+      engagement: number;
+      culturalFit: number;
+      feedback: string;
+    }>(() => JSON.parse(grade.message.content));
 
     console.log(result);
+
+    // if (result?.feedback) {
+    //   const [ttsRes] = await textToSpeech.synthesizeSpeech({
+    //     input: {
+    //       text: result.feedback,
+    //     },
+    //     voice: {
+    //       languageCode: "en-US",
+    //       name: "en-US-Standard-D",
+    //     },
+    //     audioConfig: {
+    //       audioEncoding: "MP3",
+    //     },
+    //   });
+
+    //   if (!ttsRes.audioContent) {
+    //     throw new Error("No audio content");
+    //   }
+
+    //   writeFileSync("feedback.mp3", ttsRes.audioContent, "binary");
+    // }
   }
 } catch (error) {
   console.error(error);

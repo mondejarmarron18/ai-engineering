@@ -3,7 +3,9 @@ import config from "../config";
 
 const chromaClient = new ChromaClient({
   path: config.chroma.apiUrl,
+  
 });
+
 
 // export const chromaCreateTenant = async (tenant?: string) => {
 //   const tenantName = tenant || config.chroma.tenant;

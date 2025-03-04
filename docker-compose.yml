@@ -1,3 +1,7 @@
+networks:
+  ai-engineering-basics:
+    driver: bridge
+
 services:
   # api:
   #   container_name: ai-engineering-basics-api
@@ -12,7 +16,7 @@ services:
   #     - ai-engineering-basics
   chromadb:
     container_name: ai-engineering-basics-chromadb
-    image: chromadb/chroma:0.6.4.dev266
+    image: chromadb/chroma:1.0.0b0
     ports:
       - "8000:8000"
     volumes:
@@ -20,10 +24,5 @@ services:
     networks:
       - ai-engineering-basics
     environment:
-      - CHROMA_DB_IMPL=duckdb  # Use DuckDB for persistence
-      - CHROMA_PERSIST_DIRECTORY=/chroma  # Store data in /chroma
-
-networks:
-  ai-engineering-basics:
-    driver: bridge
+      - PERSIST_DIRECTORY="/chroma"
 
