@@ -1,28 +1,31 @@
 networks:
   ai-engineering-basics:
     driver: bridge
+  ollama:
+    external: true
 
 services:
-  # api:
-  #   container_name: ai-engineering-basics-api
-  #   build: .
-  #   env_file:
-  #     - .env
-  #   volumes:
-  #     - ./src:/app/src
-  #   ports:
-  #     - "${PORT}:${PORT}"
-  #   networks:
-  #     - ai-engineering-basics
+  api:
+    container_name: ai-engineering-basics-api
+    build: .
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+    ports:
+      - "${PORT}:${PORT}"
+    networks:
+      - ai-engineering-basics
+      - ollama
+    depends_on:
+      - chromadb
+
   chromadb:
     container_name: ai-engineering-basics-chromadb
     image: chromadb/chroma:1.0.0b0
     ports:
       - "8000:8000"
     volumes:
-      - ./chroma:/chroma
+      - ./chroma:/data
     networks:
       - ai-engineering-basics
-    environment:
-      - PERSIST_DIRECTORY="/chroma"
-

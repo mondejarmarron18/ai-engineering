@@ -1,7 +1,8 @@
 import { Ollama } from "ollama";
+import config from "../config";
 
 const ollama = new Ollama({
-  host: "http://192.168.1.12:11434",
+  host: config.ollama.apiUrl,
 });
 
 export default ollama;

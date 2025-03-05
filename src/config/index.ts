@@ -10,6 +10,9 @@ const config = {
     database: getEnv("CHROMA_DATABASE"),
     tenant: getEnv("CHROMA_TENANT"),
   },
+  ollama: {
+    apiUrl: getEnv("OLLAMA_API_URL"),
+  },
 };
 
 export default config;
